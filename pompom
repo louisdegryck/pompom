@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pompom · Le Trône</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#D7263D; --red-deep:#A51C2E; --red-soft:#FBE3E6;
+  --bg:#EDEEF0; --surface:#FFFFFF; --line:#D5D7DB;
+  --ink:#24262B; --muted:#6B6F78; --on-red:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --red:#F0475B; --red-deep:#C22E42; --red-soft:#3A1E23;
+    --bg:#1C1D20; --surface:#2A2C30; --line:#3D4046;
+    --ink:#ECEDEF; --muted:#9DA1AA; --on-red:#FFFFFF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --red:#F0475B; --red-deep:#C22E42; --red-soft:#3A1E23;
+  --bg:#1C1D20; --surface:#2A2C30; --line:#3D4046;
+  --ink:#ECEDEF; --muted:#9DA1AA; --on-red:#FFFFFF;
+  color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.45}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 48px}
+
+/* Hero : le compteur du jour */
+.hero{background:var(--red);color:var(--on-red);border-radius:28px;padding:22px 22px 18px;
+  position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;
+  border-radius:50%;border:26px solid rgba(255,255,255,.12)}
+.brand{font-weight:800;font-size:1.05rem;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.brand span{opacity:.75;font-weight:400}
+.big{font-size:clamp(4.5rem,22vw,7rem);font-weight:800;line-height:.9;margin:14px 0 4px;
+  font-variant-numeric:tabular-nums}
+.big-label{font-size:1rem;opacity:.9}
+.mini{display:flex;gap:18px;margin-top:16px;font-size:.92rem;opacity:.92;flex-wrap:wrap}
+.mini b{font-weight:800}
+
+/* Onglets */
+.tabs{display:flex;gap:6px;margin:18px 0 14px;background:var(--surface);padding:5px;border-radius:999px;border:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;
+  padding:10px 6px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.panel{display:none}.panel.on{display:block}
+
+/* Formulaire */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px}
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+label.t{display:block;font-weight:600;margin-bottom:8px}
+select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:40px!important;
+  background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%)!important;
+  background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%!important;background-size:6px 6px,6px 6px!important;background-repeat:no-repeat!important}
+input[type=text],input[type=datetime-local],input[type=number],textarea,select{
+  width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);
+  border-radius:12px;padding:11px 12px}
+textarea{resize:vertical;min-height:70px}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.chip{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;
+  padding:7px 13px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg .chip{text-align:center;padding:10px 6px}
+.rolls{display:flex;gap:6px}
+.rolls button{font-size:1.9rem;line-height:1;background:none;border:0;cursor:pointer;padding:4px;
+  filter:grayscale(1);opacity:.35;transition:transform .12s}
+.rolls button.on{filter:none;opacity:1}
+.rolls button:active{transform:scale(.88)}
+.note-txt{color:var(--muted);font-size:.9rem;margin-top:4px;min-height:1.3em}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.flush{display:block;width:100%;margin-top:8px;border:0;background:var(--red);color:var(--on-red);
+  font:inherit;font-weight:800;font-size:1.15rem;padding:16px;border-radius:16px;cursor:pointer}
+.flush:hover{background:var(--red-deep)}
+.flush:disabled{opacity:.5;cursor:not-allowed}
+
+/* Journal */
+.day{font-weight:800;margin:18px 4px 8px;color:var(--muted);font-size:.95rem}
+.day:first-child{margin-top:0}
+.entry{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:start;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px}
+.entry .h{font-weight:800;font-variant-numeric:tabular-nums;font-size:1.05rem}
+.entry .who{font-weight:600}
+.entry .meta{color:var(--muted);font-size:.9rem}
+.entry .com{margin-top:4px;font-size:.95rem}
+.del{border:0;background:none;color:var(--muted);font:inherit;cursor:pointer;padding:4px 6px;border-radius:8px}
+.del:hover{color:var(--red);background:var(--red-soft)}
+
+/* Classement */
+.rank{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:8px}
+.rank .pos{font-weight:800;font-size:1.3rem;color:var(--muted);text-align:center}
+.rank.first{border-color:var(--red);background:var(--red-soft)}
+.rank.first .pos{color:var(--red)}
+.rank .n{font-weight:600}
+.rank .sub{color:var(--muted);font-size:.88rem}
+.rank .tot{font-weight:800;font-size:1.6rem;font-variant-numeric:tabular-nums;text-align:right}
+.rank .tot small{display:block;font-size:.75rem;font-weight:400;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--red);border-radius:3px}
+.period{display:flex;gap:8px;margin-bottom:12px}
+
+.empty{text-align:center;color:var(--muted);padding:34px 16px;background:var(--surface);
+  border:1.5px dashed var(--line);border-radius:20px}
+.status{font-size:.85rem;color:var(--muted);text-align:center;margin-top:22px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(120px);
+  background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:600;
+  transition:transform .25s;z-index:20;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){.toast,.rolls button{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="brand">🧻 Pompom <span>Le Trône</span></div>
+    <div class="big" id="today">0</div>
+    <div class="big-label" id="todayLabel">passage aujourd'hui pour la bande</div>
+    <div class="mini">
+      <div>Cette semaine <b id="week">0</b></div>
+      <div>Au total <b id="total">0</b></div>
+      <div>Note moyenne <b id="avg">–</b></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="add">Noter</button>
+    <button role="tab" aria-selected="false" data-tab="log">Journal</button>
+    <button role="tab" aria-selected="false" data-tab="rank">Classement</button>
+  </nav>
+
+  <!-- NOTER -->
+  <section class="panel on" id="p-add">
+    <div class="card">
+      <div class="field">
+        <label class="t" for="who">Qui y est allé ?</label>
+        <select id="who">
+          <option value="" disabled selected>Choisir une personne…</option>
+          <option>Pompom A</option>
+          <option>Pompom L</option>
+          <option>Loulou</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="t" for="when">Quand ?</label>
+        <input type="datetime-local" id="when">
+      </div>
+      <div class="field">
+        <span class="t" style="display:block;font-weight:600;margin-bottom:8px">Type de commission</span>
+        <div class="seg" id="kind">
+          <button type="button" class="chip" data-v="petite" aria-pressed="true">💧 Petite</button>
+          <button type="button" class="chip" data-v="grosse" aria-pressed="false">💩 Grosse</button>
+          <button type="button" class="chip" data-v="combo" aria-pressed="false">🎯 Combo</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="t" style="display:block;font-weight:600;margin-bottom:8px">Note de la séance</span>
+        <div class="rolls" id="rolls" role="radiogroup" aria-label="Note sur 5"></div>
+        <div class="note-txt" id="noteTxt"></div>
+      </div>
+      <div class="row2 field">
+        <div>
+          <label class="t" for="dur">Durée (min)</label>
+          <input type="number" id="dur" min="0" max="180" inputmode="numeric" placeholder="5">
+        </div>
+        <div>
+          <label class="t" for="place">Lieu</label>
+          <input type="text" id="place" maxlength="40" placeholder="Maison, boulot…" list="places">
+          <datalist id="places"></datalist>
+        </div>
+      </div>
+      <div class="field">
+        <label class="t" for="com">Commentaire</label>
+        <textarea id="com" maxlength="280" placeholder="Rien à signaler… ou pas."></textarea>
+      </div>
+      <button class="flush" id="save">Tirer la chasse</button>
+    </div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section class="panel" id="p-log"><div id="log"></div></section>
+
+  <!-- CLASSEMENT -->
+  <section class="panel" id="p-rank">
+    <div class="period" id="period">
+      <button class="chip" data-v="day" aria-pressed="false">Aujourd'hui</button>
+      <button class="chip" data-v="week" aria-pressed="true">7 jours</button>
+      <button class="chip" data-v="all" aria-pressed="false">Depuis le début</button>
+    </div>
+    <div id="ranking"></div>
+  </section>
+
+  <p class="status" id="status">Connexion…</p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const NOTES = ["", "À oublier", "Bof", "Correct", "Très bien", "Royal"];
+  const KIND = {petite:"💧 Petite", grosse:"💩 Grosse", combo:"🎯 Combo"};
+  let entries = [];        // {id, who, at, kind, note, dur, place, com}
+  let db = null, coll = null, mode = "local";
+  let state = {note:3, kind:"petite", period:"week", who:""};
+
+  /* ---------- Stockage ---------- */
+  function localLoad(){
+    try{ return JSON.parse(localStorage.getItem("pompom-entries") || "[]"); }catch(e){ return []; }
+  }
+  function localSave(){
+    try{ localStorage.setItem("pompom-entries", JSON.stringify(entries)); }catch(e){}
+  }
+  entries = localLoad();
+
+  async function init(){
+    try{
+      if (window.claude && typeof window.claude.use === "function"){
+        db = await window.claude.use("db");
+      }
+    }catch(e){ db = null; }
+    if (db){
+      mode = "db";
+      coll = db.collection("passages");
+      coll.orderBy("at","desc").limit(1000).onSnapshot(snap=>{
+        entries = snap.docs.map(d => Object.assign({id:d.id}, d.data()));
+        setStatus("Synchronisé avec toute la bande Pompom");
+        renderAll();
+      }, err=>{
+        setStatus(err.code === "revoked" ? "Accès en lecture seule" : "Synchro interrompue, rechargez la page");
+      });
+    } else {
+      setStatus("Mode local : les passages restent sur cet appareil");
+      renderAll();
+    }
+  }
+
+  async function addEntry(e){
+    if (mode === "db"){
+      try{ await coll.add(e); return true; }
+      catch(err){
+        toast(err.code === "quota_exceeded" ? "Base pleine : supprimez d'anciens passages"
+          : err.code === "invalid_argument" ? "Vous n'avez pas le droit d'ajouter ici" : "Échec de l'envoi, réessayez");
+        return false;
+      }
+    }
+    e.id = "l" + Date.now(); entries.unshift(e); localSave(); renderAll(); return true;
+  }
+  async function removeEntry(id){
+    if (mode === "db"){
+      try{ await coll.doc(id).delete(); }catch(err){ toast("Suppression impossible"); }
+    } else { entries = entries.filter(x=>x.id!==id); localSave(); renderAll(); }
+  }
+
+  /* ---------- Utilitaires ---------- */
+  const pad = n => String(n).padStart(2,"0");
+  function nowLocal(){
+    const d = new Date();
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+  const startOfDay = d => { const x=new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+  function inPeriod(at, p){
+    if (p==="all") return true;
+    if (p==="day") return at >= startOfDay(Date.now());
+    return at >= Date.now() - 7*864e5;
+  }
+  function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+  function setStatus(t){ $("#status").textContent = t; }
+  let tt;
+  function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),2200); }
+  const valid = e => e && typeof e.who==="string" && typeof e.at==="number";
+
+  /* ---------- Rendu ---------- */
+  function renderAll(){ renderHero(); renderPeople(); renderLog(); renderRank(); }
+
+  function renderHero(){
+    const list = entries.filter(valid);
+    const t = list.filter(e=>inPeriod(e.at,"day")).length;
+    $("#today").textContent = t;
+    $("#todayLabel").textContent = (t>1?"passages":"passage")+" aujourd'hui pour la bande";
+    $("#week").textContent = list.filter(e=>inPeriod(e.at,"week")).length;
+    $("#total").textContent = list.length;
+    const notes = list.map(e=>+e.note).filter(n=>n>0);
+    $("#avg").textContent = notes.length ? (notes.reduce((a,b)=>a+b,0)/notes.length).toFixed(1).replace(".",",")+" / 5" : "–";
+  }
+
+  function renderPeople(){
+    const places = [...new Set(entries.map(e=>e.place).filter(Boolean))];
+    $("#places").innerHTML = places.map(p=>`<option value="${esc(p)}">`).join("");
+  }
+
+  function renderLog(){
+    const box = $("#log"); const list = entries.filter(valid).sort((a,b)=>b.at-a.at);
+    if (!list.length){ box.innerHTML = `<div class="empty">Aucun passage pour l'instant.<br>Le premier qui y va inaugure le journal.</div>`; return; }
+    let html = "", lastDay = "";
+    const fmtDay = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    list.forEach(e=>{
+      const d = new Date(e.at);
+      let day = fmtDay.format(d);
+      if (startOfDay(d)===startOfDay(Date.now())) day = "Aujourd'hui";
+      else if (startOfDay(d)===startOfDay(Date.now()-864e5)) day = "Hier";
+      if (day!==lastDay){ html += `<div class="day">${esc(day.charAt(0).toUpperCase()+day.slice(1))}</div>`; lastDay=day; }
+      const meta = [KIND[e.kind]||"", e.note?"🧻".repeat(+e.note):"", e.dur?esc(e.dur)+" min":"", e.place?esc(e.place):""].filter(Boolean).join("  ·  ");
+      html += `<div class="entry">
+        <div class="h">${pad(d.getHours())}:${pad(d.getMinutes())}</div>
+        <div><div class="who">${esc(e.who)}</div><div class="meta">${meta}</div>${e.com?`<div class="com">${esc(e.com)}</div>`:""}</div>
+        <button class="del" data-id="${esc(e.id)}" aria-label="Supprimer ce passage">✕</button>
+      </div>`;
+    });
+    box.innerHTML = html;
+    box.querySelectorAll(".del").forEach(b=>b.onclick=()=>{ if(confirm("Supprimer ce passage ?")) removeEntry(b.dataset.id); });
+  }
+
+  function renderRank(){
+    const box = $("#ranking");
+    const list = entries.filter(valid).filter(e=>inPeriod(e.at,state.period));
+    if (!list.length){ box.innerHTML = `<div class="empty">Personne n'est allé au trône sur cette période.</div>`; return; }
+    const by = {};
+    list.forEach(e=>{
+      const k=e.who.trim(); by[k] = by[k] || {n:k,c:0,notes:[],g:0};
+      by[k].c++; if(+e.note) by[k].notes.push(+e.note); if(e.kind!=="petite") by[k].g++;
+    });
+    const rows = Object.values(by).sort((a,b)=>b.c-a.c || a.n.localeCompare(b.n,"fr"));
+    const max = rows[0].c;
+    box.innerHTML = rows.map((r,i)=>{
+      const avg = r.notes.length ? (r.notes.reduce((a,b)=>a+b,0)/r.notes.length).toFixed(1).replace(".",",") : "–";
+      const medal = i===0?"👑":i+1;
+      return `<div class="rank ${i===0?"first":""}">
+        <div class="pos">${medal}</div>
+        <div><div class="n">${esc(r.n)}</div>
+          <div class="sub">Note moy. ${avg}  ·  ${r.g} grosse${r.g>1?"s":""} commission${r.g>1?"s":""}</div>
+          <div class="bar"><i style="width:${Math.round(r.c/max*100)}%"></i></div></div>
+        <div class="tot">${r.c}<small>passage${r.c>1?"s":""}</small></div>
+      </div>`;
+    }).join("");
+  }
+
+  /* ---------- Formulaire ---------- */
+  function renderRolls(){
+    const box=$("#rolls"); box.innerHTML="";
+    for(let i=1;i<=5;i++){
+      const b=document.createElement("button"); b.type="button"; b.textContent="🧻";
+      b.className = i<=state.note ? "on" : "";
+      b.setAttribute("role","radio"); b.setAttribute("aria-checked", String(i===state.note));
+      b.setAttribute("aria-label", i+" sur 5");
+      b.onclick=()=>{ state.note=i; renderRolls(); };
+      box.appendChild(b);
+    }
+    $("#noteTxt").textContent = state.note+" / 5 : "+NOTES[state.note];
+  }
+  $("#kind").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    state.kind=b.dataset.v;
+    $("#kind").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  });
+
+  $("#save").onclick = async ()=>{
+    const who = $("#who").value.trim();
+    if (!who){ toast("Choisissez qui y est allé"); $("#who").focus(); return; }
+    const when = $("#when").value ? new Date($("#when").value).getTime() : Date.now();
+    const dur = parseInt($("#dur").value,10);
+    const e = { who, at: isNaN(when)?Date.now():when, kind: state.kind, note: state.note,
+      dur: isNaN(dur)?null:Math.max(0,Math.min(180,dur)),
+      place: $("#place").value.trim(), com: $("#com").value.trim(), createdAt: Date.now() };
+    $("#save").disabled = true;
+    const ok = await addEntry(e);
+    $("#save").disabled = false;
+    if (ok){
+      toast("Passage noté pour "+who+" 🧻");
+      $("#com").value=""; $("#dur").value=""; $("#when").value=nowLocal();
+      state.note=3; renderRolls();
+    }
+  };
+
+  /* ---------- Onglets & période ---------- */
+  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", String(x===b)));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on", p.id==="p-"+b.dataset.tab));
+    if (b.dataset.tab==="add") $("#when").value = nowLocal();
+  });
+  $("#period").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+    state.period=b.dataset.v;
+    $("#period").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    renderRank();
+  });
+
+  $("#when").value = nowLocal();
+  renderRolls();
+  renderAll();
+  init();
+})();
+</script>
+</body>
+</html>
