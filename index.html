@@ -173,10 +173,61 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 .toast button{margin-left:12px;border:0;background:var(--red);color:var(--on-red);font:inherit;font-weight:700;
   padding:4px 12px;border-radius:999px;cursor:pointer}
 .tabs button{font-size:.95rem}
+/* Connexion */
+.login{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column}
+.login[hidden]{display:none}
+.lg-top{background:var(--red);color:var(--on-red);padding:calc(48px + env(safe-area-inset-top,0px)) 24px 86px;text-align:center;
+  position:relative;overflow:hidden}
+.lg-top::before,.lg-top::after{content:"";position:absolute;border-radius:50%;border:28px solid rgba(255,255,255,.1)}
+.lg-top::before{width:220px;height:220px;left:-90px;top:-70px}
+.lg-top::after{width:160px;height:160px;right:-50px;bottom:-60px}
+.lg-roll{font-size:3.4rem;line-height:1;display:inline-block;animation:roll 1.2s ease-out}
+@keyframes roll{from{transform:rotate(-200deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.lg-title{font-size:clamp(3rem,15vw,4.2rem);font-weight:800;line-height:1;margin-top:10px}
+.lg-sub{opacity:.85;margin-top:6px}
+.lg-card{width:calc(100% - 32px);max-width:400px;margin:-58px auto 32px;background:var(--surface);border:1px solid var(--line);
+  border-radius:24px;padding:22px;position:relative;box-shadow:0 18px 40px -24px rgba(0,0,0,.45)}
+.lg-card h2{margin:0 0 18px;font-size:1.3rem}
+.lg-card input#lgId{text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.pw{position:relative}
+.pw input{padding-right:84px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);
+  font:inherit;font-size:.88rem;font-weight:600;padding:6px 10px;border-radius:8px;cursor:pointer}
+.pw button:hover{color:var(--red)}
+.lg-card.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.login .err{color:var(--red);font-weight:600;min-height:1.4em;margin:10px 0 0;text-align:center}
+.flush .spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.me-line{display:flex;align-items:center;gap:10px;font-weight:600}
+.me-line .av{width:38px;height:38px;border-radius:50%;background:var(--red);color:var(--on-red);display:grid;place-items:center;font-weight:800}
+@media (prefers-reduced-motion: reduce){.lg-roll,.lg-card.shake,.flush .spin{animation:none}}
+.userbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 0;color:var(--muted)}
+.userbar b{color:var(--ink)}
+.express.solo{grid-template-columns:1fr}
+.express.solo button{padding:18px;font-size:1.05rem}
 @media (max-width:420px){.trophies{grid-template-columns:1fr}.kpi b{font-size:1.25rem}}
 </style>
 </head>
 <body>
+<div class="login" id="login">
+  <div class="lg-top">
+    <div class="lg-roll" aria-hidden="true">🧻</div>
+    <div class="lg-title">Pompom</div>
+    <div class="lg-sub">Le Trône, réservé aux membres</div>
+  </div>
+  <form class="lg-card" id="lgForm" novalidate>
+    <h2>Qui est sur le trône ?</h2>
+    <div class="field"><label class="t" for="lgId">Identifiant</label>
+      <input type="text" id="lgId" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="10"></div>
+    <div class="field"><label class="t" for="lgPw">Mot de passe</label>
+      <div class="pw"><input type="password" id="lgPw" autocomplete="current-password" maxlength="20">
+      <button type="button" id="lgEye" aria-label="Afficher le mot de passe">Afficher</button></div></div>
+    <button class="flush" id="lgBtn" type="submit">Entrer</button>
+    <p class="err" id="lgErr" role="alert"></p>
+  </form>
+</div>
 <div class="wrap">
   <header class="hero">
     <div class="brand">🧻 Pompom <span>Le Trône</span></div>
@@ -188,6 +239,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
       <div>Note moyenne <b id="avg">–</b></div>
     </div>
   </header>
+  <div class="userbar"><span>Connecté : <b id="meName"></b></span><button class="ghost" id="logout" type="button">Se déconnecter</button></div>
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="add">Noter</button>
@@ -209,8 +261,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     </div>
     <div class="card">
       <div class="field">
-        <label class="t" for="who">Qui y est allé ?</label>
-        <select id="who"><option value="" disabled selected>Choisir une personne…</option></select>
+        <div class="me-line"><span class="av" id="formAv"></span><span>Passage de <b id="formWho"></b></span></div>
       </div>
       <div class="field">
         <label class="t" for="when">Quand ?</label>
@@ -292,6 +343,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 (function(){
   const $ = s => document.querySelector(s);
   const PEOPLE = ["Pompom A", "Pompom L", "Loulou"];
+  let me = null, auth = null; // auth = {code, pw} ; vérifié côté Supabase à chaque action
+  try{ const s = JSON.parse(localStorage.getItem("pompom-session") || "null"); if (s && s.code && s.pw && s.name){ auth = {code:s.code, pw:s.pw}; me = s.name; } }catch(e){}
   const NOTES = ["", "À oublier", "Bof", "Correct", "Très bien", "Royal"];
   const KIND = {petite:"💧 Petite", grosse:"💩 Grosse", combo:"🎯 Combo"};
   const EMOJIS = ["😂", "🤢", "👑", "💨"];
@@ -301,17 +354,21 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   /* ---------- Stockage partagé (Supabase) ---------- */
   const SUPABASE_URL = "https://ozonutovdkrtprpzdyad.supabase.co";
   const SUPABASE_KEY = "sb_publishable_BNhJtE_YcSxfkloHaoS7Nw_Hc3OwSQv";
-  let sb = null, mode = "local";
+  const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
   const fromRow = r => ({ id:String(r.id), who:r.who, at:Number(r.moment), kind:r.kind, note:r.note, dur:r.dur,
     place:r.place, com:r.com, reactions:(r.reactions && typeof r.reactions==="object") ? r.reactions : {} });
-  const toRow = e => { const r={}; ["who","kind","note","dur","place","com","reactions"].forEach(k=>{ if(k in e) r[k]=e[k]; });
-    if ("at" in e) r.moment = e.at; return r; };
 
-  function localLoad(){ try{ return JSON.parse(localStorage.getItem("pompom-entries") || "[]"); }catch(e){ return []; } }
-  function localSave(){ try{ localStorage.setItem("pompom-entries", JSON.stringify(entries)); }catch(e){} }
   let myReacts = {};
   try{ myReacts = JSON.parse(localStorage.getItem("pompom-reacts") || "{}"); }catch(e){}
   function saveReacts(){ try{ localStorage.setItem("pompom-reacts", JSON.stringify(myReacts)); }catch(e){} }
+
+  // Toutes les écritures passent par des fonctions Supabase qui vérifient l'identifiant et le mot de passe.
+  async function rpc(fn, args){
+    const { data, error } = await sb.rpc(fn, Object.assign({ p_code:auth.code, p_mdp:auth.pw }, args));
+    if (error) throw error;
+    return data;
+  }
+  const payload = e => ({ p_moment:e.at, p_kind:e.kind, p_note:e.note, p_dur:e.dur, p_place:e.place, p_com:e.com });
 
   async function refresh(){
     const { data, error } = await sb.from("passages").select("*").order("moment", { ascending:false }).limit(2000);
@@ -321,40 +378,27 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     renderAll();
   }
   async function init(){
-    if (window.supabase){
-      mode = "sb";
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      await refresh();
-      sb.channel("passages-live").on("postgres_changes", { event:"*", schema:"public", table:"passages" }, () => refresh()).subscribe();
-      setInterval(refresh, 30000);
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-    } else {
-      entries = localLoad();
-      setStatus("Mode local : les passages restent sur cet appareil");
-      renderAll();
+    if (!sb){ setStatus("Impossible de charger l'appli : vérifie ta connexion internet"); return; }
+    if (auth){
+      const { data } = await sb.rpc("pompom_nom", { p_code:auth.code, p_mdp:auth.pw });
+      if (!data) logout(); else if (data !== me){ me = data; saveSession(); applyUser(); }
     }
+    await refresh();
+    sb.channel("passages-live").on("postgres_changes", { event:"*", schema:"public", table:"passages" }, () => refresh()).subscribe();
+    setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
   }
   async function addEntry(e){
-    if (mode === "sb"){
-      const { data, error } = await sb.from("passages").insert(toRow(e)).select("id").single();
-      if (error){ toast("Échec de l'envoi, réessaie"); return null; }
-      await refresh(); return String(data.id);
-    }
-    e.id = "l" + Date.now(); e.reactions = {}; entries.unshift(e); localSave(); renderAll(); return e.id;
+    try{ const id = await rpc("pompom_ajouter", payload(e)); await refresh(); return String(id); }
+    catch(err){ toast("Échec de l'envoi, réessaie"); return null; }
   }
-  async function updateEntry(id, patch){
-    if (mode === "sb"){
-      const { error } = await sb.from("passages").update(toRow(patch)).eq("id", id);
-      if (error){ toast("Modification impossible"); return false; }
-      await refresh(); return true;
-    }
-    const e = entries.find(x=>x.id===id); if (e) Object.assign(e, patch); localSave(); renderAll(); return true;
+  async function updateEntry(id, e){
+    try{ await rpc("pompom_modifier", Object.assign({ p_id:Number(id) }, payload(e))); await refresh(); return true; }
+    catch(err){ toast("Tu ne peux modifier que tes propres passages"); return false; }
   }
   async function removeEntry(id){
-    if (mode === "sb"){
-      const { error } = await sb.from("passages").delete().eq("id", id);
-      if (error) toast("Suppression impossible"); else refresh();
-    } else { entries = entries.filter(x=>x.id!==id); localSave(); renderAll(); }
+    try{ await rpc("pompom_supprimer", { p_id:Number(id) }); await refresh(); }
+    catch(err){ toast("Tu ne peux supprimer que tes propres passages"); }
   }
 
   /* ---------- Utilitaires ---------- */
@@ -425,16 +469,16 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
       const meta = [KIND[e.kind]||"", e.note?"🧻".repeat(+e.note):"", e.dur?esc(e.dur)+" min":"", e.place?esc(e.place):""].filter(Boolean).join("  ·  ");
       const r = e.reactions || {};
       const reacts = EMOJIS.map(em=>{
-        const n = +r[em] || 0, mine = myReacts[e.id+"|"+em];
+        const n = +r[em] || 0, mine = myReacts[me+"|"+e.id+"|"+em];
         return `<button class="${mine?"mine":""}" data-id="${esc(e.id)}" data-em="${em}" aria-label="Réagir ${em}">${em}${n?" "+n:""}</button>`;
       }).join("");
       html += `<div class="entry">
         <div class="h">${pad(d.getHours())}:${pad(d.getMinutes())}</div>
         <div><div class="who">${esc(e.who)}</div><div class="meta">${meta}</div>${e.com?`<div class="com">${esc(e.com)}</div>`:""}
           <div class="reacts">${reacts}</div></div>
-        <div class="acts">
+        <div class="acts">${e.who===me ? `
           <button class="del" data-edit="${esc(e.id)}" aria-label="Modifier ce passage">✎</button>
-          <button class="del" data-del="${esc(e.id)}" aria-label="Supprimer ce passage">✕</button>
+          <button class="del" data-del="${esc(e.id)}" aria-label="Supprimer ce passage">✕</button>` : ""}
         </div>
       </div>`;
     });
@@ -446,13 +490,14 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 
   function react(id, em){
     const e = entries.find(x=>x.id===id); if (!e) return;
-    const key = id+"|"+em, r = Object.assign({}, e.reactions||{});
+    const key = me+"|"+id+"|"+em, r = Object.assign({}, e.reactions||{});
     const n = +r[em] || 0;
     if (myReacts[key]){ r[em] = Math.max(0, n-1); delete myReacts[key]; }
     else { r[em] = n+1; myReacts[key] = 1; }
     if (!r[em]) delete r[em];
+    const delta = myReacts[key] ? 1 : -1;
     saveReacts(); e.reactions = r; renderLog();
-    updateEntry(id, {reactions:r});
+    rpc("pompom_reagir", { p_id:Number(id), p_emoji:em, p_delta:delta }).catch(()=>{ toast("Réaction non enregistrée"); refresh(); });
   }
 
   function renderRank(){
@@ -573,7 +618,6 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     $("#kind").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", String(x.dataset.v===v)));
   }
   $("#kind").querySelectorAll(".chip").forEach(b=>b.onclick=()=>setKind(b.dataset.v));
-  $("#who").insertAdjacentHTML("beforeend", PEOPLE.map(p=>`<option>${esc(p)}</option>`).join(""));
 
   function resetForm(){
     state.editId = null; state.note = 3; setKind("petite"); renderRolls();
@@ -588,8 +632,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   function startEdit(id){
     const e = entries.find(x=>x.id===id); if (!e) return;
     state.editId = id;
-    if (!PEOPLE.includes(e.who)) $("#who").insertAdjacentHTML("beforeend", `<option>${esc(e.who)}</option>`);
-    $("#who").value = e.who; $("#when").value = toInput(e.at);
+    if (e.who !== me) return;
+    $("#when").value = toInput(e.at);
     setKind(e.kind || "petite"); state.note = +e.note || 3; renderRolls();
     $("#dur").value = e.dur ?? ""; $("#place").value = e.place || ""; $("#com").value = e.com || "";
     $("#editBanner").classList.add("on"); $("#expressWrap").style.display="none";
@@ -599,8 +643,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   $("#cancelEdit").onclick = ()=>{ resetForm(); showTab("log"); };
 
   $("#save").onclick = async ()=>{
-    const who = $("#who").value;
-    if (!who){ toast("Choisis qui y est allé"); $("#who").focus(); return; }
+    if (!me) return;
+    const who = me;
     const when = $("#when").value ? new Date($("#when").value).getTime() : Date.now();
     const dur = parseInt($("#dur").value,10);
     const e = { who, at: isNaN(when)?Date.now():when, kind: state.kind, note: state.note,
@@ -618,17 +662,62 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   };
 
   /* ---------- +1 express ---------- */
-  PEOPLE.forEach(p=>{
+  function renderExpress(){
+    const box = $("#express"); box.innerHTML = ""; box.classList.add("solo");
+    if (!me) return;
     const b=document.createElement("button"); b.type="button";
-    b.innerHTML = `<b>+1</b>${esc(p)}`;
+    b.innerHTML = `<b>+1</b>pour moi (${esc(me)})`;
     b.onclick = async ()=>{
       b.disabled = true;
-      const id = await addEntry({ who:p, at:Date.now(), kind:"petite", note:null, dur:null, place:"", com:"" });
+      const id = await addEntry({ who:me, at:Date.now(), kind:"petite", note:null, dur:null, place:"", com:"" });
       b.disabled = false;
-      if (id) toast("+1 pour "+p+" 🧻", ()=>removeEntry(id));
+      if (id) toast("+1 pour "+me+" 🧻", ()=>removeEntry(id));
     };
-    $("#express").appendChild(b);
-  });
+    box.appendChild(b);
+  }
+
+  /* ---------- Connexion ---------- */
+  function saveSession(){ try{ localStorage.setItem("pompom-session", JSON.stringify({ code:auth.code, pw:auth.pw, name:me })); }catch(e){} }
+  function applyUser(){
+    $("#login").hidden = !!me;
+    $("#meName").textContent = me || "";
+    $("#formWho").textContent = me || "";
+    $("#formAv").textContent = me ? me.replace("Pompom ","").charAt(0) : "";
+    if (me){ state.person = me; state.logWho = "all"; }
+    renderExpress(); renderAll();
+  }
+  function logout(){
+    me = null; auth = null;
+    try{ localStorage.removeItem("pompom-session"); }catch(e){}
+    resetForm(); showTab("add"); $("#lgId").value = ""; $("#lgPw").value = ""; applyUser();
+    setTimeout(()=>$("#lgId").focus(), 50);
+  }
+  async function tryLogin(ev){
+    if (ev) ev.preventDefault();
+    const code = $("#lgId").value.trim().toUpperCase(), pw = $("#lgPw").value;
+    const err = $("#lgErr"), btn = $("#lgBtn"), card = $("#lgForm");
+    if (!code || !pw){ err.textContent = "Renseigne ton identifiant et ton mot de passe"; return; }
+    if (!sb){ err.textContent = "Pas de connexion internet"; return; }
+    btn.disabled = true; btn.innerHTML = '<span class="spin" aria-hidden="true"></span> Vérification…'; err.textContent = "";
+    const { data, error } = await sb.rpc("pompom_nom", { p_code:code, p_mdp:pw });
+    btn.disabled = false; btn.textContent = "Entrer";
+    if (error){ err.textContent = "Serveur injoignable, réessaie dans un instant"; return; }
+    if (!data){
+      err.textContent = "Identifiant ou mot de passe incorrect";
+      card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+      $("#lgPw").value = ""; $("#lgPw").focus(); return;
+    }
+    auth = { code, pw }; me = data; saveSession(); $("#lgPw").value = "";
+    applyUser(); toast("Salut " + me + " 👋");
+  }
+  $("#lgForm").addEventListener("submit", tryLogin);
+  $("#lgEye").onclick = ()=>{
+    const i = $("#lgPw"), show = i.type === "password";
+    i.type = show ? "text" : "password";
+    $("#lgEye").textContent = show ? "Masquer" : "Afficher";
+    $("#lgEye").setAttribute("aria-label", show ? "Masquer le mot de passe" : "Afficher le mot de passe");
+  };
+  $("#logout").onclick = logout;
 
   /* ---------- Onglets & période ---------- */
   document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
@@ -643,7 +732,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 
   $("#when").value = nowLocal();
   renderRolls();
-  renderAll();
+  applyUser();
   init();
 })();
 </script>
