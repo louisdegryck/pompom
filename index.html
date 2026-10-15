@@ -118,11 +118,62 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 .empty{text-align:center;color:var(--muted);padding:34px 16px;background:var(--surface);
   border:1.5px dashed var(--line);border-radius:20px}
 .status{font-size:.85rem;color:var(--muted);text-align:center;margin-top:22px}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(120px);
+.toast{display:flex;align-items:center;position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(120px);
   background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:600;
   transition:transform .25s;z-index:20;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion: reduce){.toast,.rolls button{transition:none}}
+
+/* Express */
+.express{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.express button{border:0;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);
+  font:inherit;font-weight:700;padding:14px 6px;border-radius:16px;cursor:pointer;line-height:1.2}
+.express button b{display:block;font-size:1.5rem;color:var(--red);font-weight:800}
+.express button:hover{border-color:var(--red)}
+.express button:active{transform:scale(.96)}
+.sect{font-weight:800;margin:4px 4px 8px;color:var(--muted);font-size:.95rem}
+.edit-banner{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--red-soft);
+  color:var(--ink);border:1.5px solid var(--red);border-radius:14px;padding:10px 14px;margin-bottom:14px;font-weight:600}
+.edit-banner.on{display:flex}
+.ghost{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;
+  padding:8px 14px;border-radius:999px;cursor:pointer}
+/* Journal extras */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.acts{display:flex;flex-direction:column;gap:2px}
+.reacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.reacts button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem;
+  padding:3px 9px;border-radius:999px;cursor:pointer;font-variant-numeric:tabular-nums}
+.reacts button.mine{border-color:var(--red);background:var(--red-soft)}
+.reacts button:active{transform:scale(.9)}
+/* Stats */
+.block{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+.block h3{margin:0 0 4px;font-size:1.15rem}
+.block .lead{color:var(--muted);margin:0 0 14px;font-size:.95rem}
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;align-items:end;height:130px}
+.hours div{background:var(--line);border-radius:4px 4px 0 0;min-height:3px;position:relative}
+.hours div.peak{background:var(--red)}
+.hlabels{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:6px;font-size:.72rem;color:var(--muted)}
+.hlabels span{text-align:center}
+.trophies{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.trophy{border:1.5px solid var(--line);border-radius:16px;padding:12px;background:var(--bg)}
+.trophy .e{font-size:1.7rem;line-height:1}
+.trophy .tt{font-weight:800;margin-top:6px}
+.trophy .w{font-weight:600;color:var(--red)}
+.trophy .d{color:var(--muted);font-size:.85rem}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--bg);border-radius:14px;padding:12px}
+.kpi b{display:block;font-size:1.5rem;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:.85rem}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:14px 0 6px;background:var(--line)}
+.split i{display:block;height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.facts{margin:14px 0 0;padding:0;list-style:none}
+.facts li{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+.facts li b{text-align:right}
+.toast button{margin-left:12px;border:0;background:var(--red);color:var(--on-red);font:inherit;font-weight:700;
+  padding:4px 12px;border-radius:999px;cursor:pointer}
+.tabs button{font-size:.95rem}
+@media (max-width:420px){.trophies{grid-template-columns:1fr}.kpi b{font-size:1.25rem}}
 </style>
 </head>
 <body>
@@ -142,19 +193,24 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     <button role="tab" aria-selected="true" data-tab="add">Noter</button>
     <button role="tab" aria-selected="false" data-tab="log">Journal</button>
     <button role="tab" aria-selected="false" data-tab="rank">Classement</button>
+    <button role="tab" aria-selected="false" data-tab="stats">Stats</button>
   </nav>
 
   <!-- NOTER -->
   <section class="panel on" id="p-add">
+    <div id="expressWrap">
+      <div class="sect">+1 express, enregistré à l'instant</div>
+      <div class="express" id="express"></div>
+      <div class="sect">Ou en détail</div>
+    </div>
+    <div class="edit-banner" id="editBanner">
+      <span>Modification d'un passage</span>
+      <button class="ghost" id="cancelEdit" type="button">Annuler</button>
+    </div>
     <div class="card">
       <div class="field">
         <label class="t" for="who">Qui y est allé ?</label>
-        <select id="who">
-          <option value="" disabled selected>Choisir une personne…</option>
-          <option>Pompom A</option>
-          <option>Pompom L</option>
-          <option>Loulou</option>
-        </select>
+        <select id="who"><option value="" disabled selected>Choisir une personne…</option></select>
       </div>
       <div class="field">
         <label class="t" for="when">Quand ?</label>
@@ -193,7 +249,10 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   </section>
 
   <!-- JOURNAL -->
-  <section class="panel" id="p-log"><div id="log"></div></section>
+  <section class="panel" id="p-log">
+    <div class="filters" id="logFilter"></div>
+    <div id="log"></div>
+  </section>
 
   <!-- CLASSEMENT -->
   <section class="panel" id="p-rank">
@@ -205,47 +264,69 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     <div id="ranking"></div>
   </section>
 
+  <!-- STATS -->
+  <section class="panel" id="p-stats">
+    <div class="block">
+      <h3>Heures de pointe</h3>
+      <p class="lead" id="peakTxt">Tous les passages de la bande, par heure de la journée.</p>
+      <div class="hours" id="hours"></div>
+      <div class="hlabels" id="hlabels"></div>
+    </div>
+    <div class="block">
+      <h3>Trophées</h3>
+      <p class="lead">Depuis le début. Les records sont faits pour être battus.</p>
+      <div class="trophies" id="trophies"></div>
+    </div>
+    <div class="block">
+      <h3>Fiche perso</h3>
+      <div class="filters" id="personPick" style="margin-top:10px"></div>
+      <div id="person"></div>
+    </div>
+  </section>
+
   <p class="status" id="status">Connexion…</p>
 </div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastTxt"></span><button id="toastBtn" hidden>Annuler</button></div>
 
 <script>
 (function(){
   const $ = s => document.querySelector(s);
+  const PEOPLE = ["Pompom A", "Pompom L", "Loulou"];
   const NOTES = ["", "À oublier", "Bof", "Correct", "Très bien", "Royal"];
   const KIND = {petite:"💧 Petite", grosse:"💩 Grosse", combo:"🎯 Combo"};
-  let entries = [];        // {id, who, at, kind, note, dur, place, com}
-  let state = {note:3, kind:"petite", period:"week", who:""};
+  const EMOJIS = ["😂", "🤢", "👑", "💨"];
+  let entries = [];
+  let state = {note:3, kind:"petite", period:"week", logWho:"all", person:PEOPLE[0], editId:null};
 
   /* ---------- Stockage partagé (Supabase) ---------- */
-  // 👉 Colle ici les infos de ton projet Supabase (Project Settings > API)
   const SUPABASE_URL = "https://ozonutovdkrtprpzdyad.supabase.co";
   const SUPABASE_KEY = "sb_publishable_BNhJtE_YcSxfkloHaoS7Nw_Hc3OwSQv";
-
   let sb = null, mode = "local";
-  const fromRow = r => ({ id:String(r.id), who:r.who, at:Number(r.moment), kind:r.kind, note:r.note, dur:r.dur, place:r.place, com:r.com });
+  const fromRow = r => ({ id:String(r.id), who:r.who, at:Number(r.moment), kind:r.kind, note:r.note, dur:r.dur,
+    place:r.place, com:r.com, reactions:(r.reactions && typeof r.reactions==="object") ? r.reactions : {} });
+  const toRow = e => { const r={}; ["who","kind","note","dur","place","com","reactions"].forEach(k=>{ if(k in e) r[k]=e[k]; });
+    if ("at" in e) r.moment = e.at; return r; };
 
   function localLoad(){ try{ return JSON.parse(localStorage.getItem("pompom-entries") || "[]"); }catch(e){ return []; } }
   function localSave(){ try{ localStorage.setItem("pompom-entries", JSON.stringify(entries)); }catch(e){} }
+  let myReacts = {};
+  try{ myReacts = JSON.parse(localStorage.getItem("pompom-reacts") || "{}"); }catch(e){}
+  function saveReacts(){ try{ localStorage.setItem("pompom-reacts", JSON.stringify(myReacts)); }catch(e){} }
 
   async function refresh(){
-    const { data, error } = await sb.from("passages").select("*").order("moment", { ascending:false }).limit(1000);
-    if (error){ setStatus("Connexion à la base impossible : vérifie l'URL, la clé et la table"); return; }
+    const { data, error } = await sb.from("passages").select("*").order("moment", { ascending:false }).limit(2000);
+    if (error){ setStatus("Connexion à la base impossible : vérifie la table sur Supabase"); return; }
     entries = data.map(fromRow);
     setStatus("Synchronisé avec toute la bande Pompom");
     renderAll();
   }
-
   async function init(){
-    const configured = !SUPABASE_URL.startsWith("COLLE") && !SUPABASE_KEY.startsWith("COLLE");
-    if (window.supabase && configured){
+    if (window.supabase){
       mode = "sb";
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       await refresh();
-      sb.channel("passages-live")
-        .on("postgres_changes", { event:"*", schema:"public", table:"passages" }, () => refresh())
-        .subscribe();
-      setInterval(refresh, 30000); // filet de sécurité
+      sb.channel("passages-live").on("postgres_changes", { event:"*", schema:"public", table:"passages" }, () => refresh()).subscribe();
+      setInterval(refresh, 30000);
       document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
     } else {
       entries = localLoad();
@@ -253,16 +334,21 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
       renderAll();
     }
   }
-
   async function addEntry(e){
     if (mode === "sb"){
-      const { error } = await sb.from("passages").insert({
-        who:e.who, moment:e.at, kind:e.kind, note:e.note, dur:e.dur, place:e.place, com:e.com
-      });
-      if (error){ toast("Échec de l'envoi, réessaie"); return false; }
+      const { data, error } = await sb.from("passages").insert(toRow(e)).select("id").single();
+      if (error){ toast("Échec de l'envoi, réessaie"); return null; }
+      await refresh(); return String(data.id);
+    }
+    e.id = "l" + Date.now(); e.reactions = {}; entries.unshift(e); localSave(); renderAll(); return e.id;
+  }
+  async function updateEntry(id, patch){
+    if (mode === "sb"){
+      const { error } = await sb.from("passages").update(toRow(patch)).eq("id", id);
+      if (error){ toast("Modification impossible"); return false; }
       await refresh(); return true;
     }
-    e.id = "l" + Date.now(); entries.unshift(e); localSave(); renderAll(); return true;
+    const e = entries.find(x=>x.id===id); if (e) Object.assign(e, patch); localSave(); renderAll(); return true;
   }
   async function removeEntry(id){
     if (mode === "sb"){
@@ -273,10 +359,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 
   /* ---------- Utilitaires ---------- */
   const pad = n => String(n).padStart(2,"0");
-  function nowLocal(){
-    const d = new Date();
-    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());
-  }
+  function toInput(ts){ const d=new Date(ts); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
+  const nowLocal = () => toInput(Date.now());
   const startOfDay = d => { const x=new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
   function inPeriod(at, p){
     if (p==="all") return true;
@@ -284,74 +368,191 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     return at >= Date.now() - 7*864e5;
   }
   function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+  const fr = n => String(n).replace(".",",");
+  const plural = (n, w) => n + " " + w + (n>1?"s":"");
   function setStatus(t){ $("#status").textContent = t; }
   let tt;
-  function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"),2200); }
-  const valid = e => e && typeof e.who==="string" && typeof e.at==="number";
+  function toast(t, action){
+    const el=$("#toast"), b=$("#toastBtn");
+    $("#toastTxt").textContent=t;
+    b.hidden = !action; b.onclick = action ? ()=>{ el.classList.remove("show"); action(); } : null;
+    el.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("show"), action?5000:2200);
+  }
+  const valid = e => e && typeof e.who==="string" && typeof e.at==="number" && !isNaN(e.at);
+  const list = () => entries.filter(valid);
+  const avgOf = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const fmtDay = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+  const fmtShort = new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short"});
 
-  /* ---------- Rendu ---------- */
-  function renderAll(){ renderHero(); renderPeople(); renderLog(); renderRank(); }
-
-  function renderHero(){
-    const list = entries.filter(valid);
-    const t = list.filter(e=>inPeriod(e.at,"day")).length;
-    $("#today").textContent = t;
-    $("#todayLabel").textContent = (t>1?"passages":"passage")+" aujourd'hui pour la bande";
-    $("#week").textContent = list.filter(e=>inPeriod(e.at,"week")).length;
-    $("#total").textContent = list.length;
-    const notes = list.map(e=>+e.note).filter(n=>n>0);
-    $("#avg").textContent = notes.length ? (notes.reduce((a,b)=>a+b,0)/notes.length).toFixed(1).replace(".",",")+" / 5" : "–";
+  function chips(box, items, current, onPick){
+    box.innerHTML="";
+    items.forEach(([v,label])=>{
+      const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=label;
+      b.setAttribute("aria-pressed", String(v===current)); b.onclick=()=>onPick(v); box.appendChild(b);
+    });
   }
 
-  function renderPeople(){
+  /* ---------- Rendu ---------- */
+  function renderAll(){ renderHero(); renderPlaces(); renderLog(); renderRank(); renderStats(); }
+
+  function renderHero(){
+    const L = list();
+    const t = L.filter(e=>inPeriod(e.at,"day")).length;
+    $("#today").textContent = t;
+    $("#todayLabel").textContent = (t>1?"passages":"passage")+" aujourd'hui pour la bande";
+    $("#week").textContent = L.filter(e=>inPeriod(e.at,"week")).length;
+    $("#total").textContent = L.length;
+    const a = avgOf(L.map(e=>+e.note).filter(n=>n>0));
+    $("#avg").textContent = a ? fr(a.toFixed(1))+" / 5" : "–";
+  }
+  function renderPlaces(){
     const places = [...new Set(entries.map(e=>e.place).filter(Boolean))];
     $("#places").innerHTML = places.map(p=>`<option value="${esc(p)}">`).join("");
   }
 
   function renderLog(){
-    const box = $("#log"); const list = entries.filter(valid).sort((a,b)=>b.at-a.at);
-    if (!list.length){ box.innerHTML = `<div class="empty">Aucun passage pour l'instant.<br>Le premier qui y va inaugure le journal.</div>`; return; }
+    chips($("#logFilter"), [["all","Tout le monde"], ...PEOPLE.map(p=>[p,p])], state.logWho, v=>{ state.logWho=v; renderLog(); });
+    const box = $("#log");
+    const L = list().filter(e=>state.logWho==="all" || e.who===state.logWho).sort((a,b)=>b.at-a.at);
+    if (!L.length){ box.innerHTML = `<div class="empty">Aucun passage ici pour l'instant.<br>Le premier qui y va inaugure le journal.</div>`; return; }
     let html = "", lastDay = "";
-    const fmtDay = new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-    list.forEach(e=>{
+    L.slice(0,300).forEach(e=>{
       const d = new Date(e.at);
       let day = fmtDay.format(d);
       if (startOfDay(d)===startOfDay(Date.now())) day = "Aujourd'hui";
       else if (startOfDay(d)===startOfDay(Date.now()-864e5)) day = "Hier";
       if (day!==lastDay){ html += `<div class="day">${esc(day.charAt(0).toUpperCase()+day.slice(1))}</div>`; lastDay=day; }
       const meta = [KIND[e.kind]||"", e.note?"🧻".repeat(+e.note):"", e.dur?esc(e.dur)+" min":"", e.place?esc(e.place):""].filter(Boolean).join("  ·  ");
+      const r = e.reactions || {};
+      const reacts = EMOJIS.map(em=>{
+        const n = +r[em] || 0, mine = myReacts[e.id+"|"+em];
+        return `<button class="${mine?"mine":""}" data-id="${esc(e.id)}" data-em="${em}" aria-label="Réagir ${em}">${em}${n?" "+n:""}</button>`;
+      }).join("");
       html += `<div class="entry">
         <div class="h">${pad(d.getHours())}:${pad(d.getMinutes())}</div>
-        <div><div class="who">${esc(e.who)}</div><div class="meta">${meta}</div>${e.com?`<div class="com">${esc(e.com)}</div>`:""}</div>
-        <button class="del" data-id="${esc(e.id)}" aria-label="Supprimer ce passage">✕</button>
+        <div><div class="who">${esc(e.who)}</div><div class="meta">${meta}</div>${e.com?`<div class="com">${esc(e.com)}</div>`:""}
+          <div class="reacts">${reacts}</div></div>
+        <div class="acts">
+          <button class="del" data-edit="${esc(e.id)}" aria-label="Modifier ce passage">✎</button>
+          <button class="del" data-del="${esc(e.id)}" aria-label="Supprimer ce passage">✕</button>
+        </div>
       </div>`;
     });
     box.innerHTML = html;
-    box.querySelectorAll(".del").forEach(b=>b.onclick=()=>{ if(confirm("Supprimer ce passage ?")) removeEntry(b.dataset.id); });
+    box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ if(confirm("Supprimer ce passage ?")) removeEntry(b.dataset.del); });
+    box.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>startEdit(b.dataset.edit));
+    box.querySelectorAll(".reacts button").forEach(b=>b.onclick=()=>react(b.dataset.id, b.dataset.em));
+  }
+
+  function react(id, em){
+    const e = entries.find(x=>x.id===id); if (!e) return;
+    const key = id+"|"+em, r = Object.assign({}, e.reactions||{});
+    const n = +r[em] || 0;
+    if (myReacts[key]){ r[em] = Math.max(0, n-1); delete myReacts[key]; }
+    else { r[em] = n+1; myReacts[key] = 1; }
+    if (!r[em]) delete r[em];
+    saveReacts(); e.reactions = r; renderLog();
+    updateEntry(id, {reactions:r});
   }
 
   function renderRank(){
     const box = $("#ranking");
-    const list = entries.filter(valid).filter(e=>inPeriod(e.at,state.period));
-    if (!list.length){ box.innerHTML = `<div class="empty">Personne n'est allé au trône sur cette période.</div>`; return; }
+    const L = list().filter(e=>inPeriod(e.at,state.period));
+    if (!L.length){ box.innerHTML = `<div class="empty">Personne n'est allé au trône sur cette période.</div>`; return; }
     const by = {};
-    list.forEach(e=>{
+    L.forEach(e=>{
       const k=e.who.trim(); by[k] = by[k] || {n:k,c:0,notes:[],g:0};
       by[k].c++; if(+e.note) by[k].notes.push(+e.note); if(e.kind!=="petite") by[k].g++;
     });
     const rows = Object.values(by).sort((a,b)=>b.c-a.c || a.n.localeCompare(b.n,"fr"));
     const max = rows[0].c;
     box.innerHTML = rows.map((r,i)=>{
-      const avg = r.notes.length ? (r.notes.reduce((a,b)=>a+b,0)/r.notes.length).toFixed(1).replace(".",",") : "–";
-      const medal = i===0?"👑":i+1;
+      const a = avgOf(r.notes);
       return `<div class="rank ${i===0?"first":""}">
-        <div class="pos">${medal}</div>
+        <div class="pos">${i===0?"👑":i+1}</div>
         <div><div class="n">${esc(r.n)}</div>
-          <div class="sub">Note moy. ${avg}  ·  ${r.g} grosse${r.g>1?"s":""} commission${r.g>1?"s":""}</div>
+          <div class="sub">Note moy. ${a?fr(a.toFixed(1)):"–"}  ·  ${r.g} grosse${r.g>1?"s":""} commission${r.g>1?"s":""}</div>
           <div class="bar"><i style="width:${Math.round(r.c/max*100)}%"></i></div></div>
         <div class="tot">${r.c}<small>passage${r.c>1?"s":""}</small></div>
       </div>`;
     }).join("");
+  }
+
+  /* ---------- Stats ---------- */
+  function renderStats(){ renderHours(); renderTrophies(); renderPerson(); }
+
+  function renderHours(){
+    const L = list(), h = new Array(24).fill(0);
+    L.forEach(e=>h[new Date(e.at).getHours()]++);
+    const max = Math.max(...h), peak = h.indexOf(max);
+    $("#hours").innerHTML = h.map((n,i)=>`<div class="${max&&n===max?"peak":""}" style="height:${max?Math.max(2,n/max*100):2}%" title="${i}h : ${plural(n,"passage")}"></div>`).join("");
+    $("#hlabels").innerHTML = h.map((_,i)=>`<span>${i%3===0?i+"h":""}</span>`).join("");
+    $("#peakTxt").textContent = max ? `Heure de pointe : entre ${peak}h et ${peak+1}h, avec ${plural(max,"passage")}.` : "Pas encore assez de passages pour voir une tendance.";
+  }
+
+  function leader(map){
+    let best=null; Object.entries(map).forEach(([k,v])=>{ if(v>0 && (!best || v>best[1])) best=[k,v]; }); return best;
+  }
+  function renderTrophies(){
+    const L = list(), count = f => { const m={}; L.filter(f).forEach(e=>m[e.who]=(m[e.who]||0)+1); return leader(m); };
+    const T = [];
+    const early = count(e=>new Date(e.at).getHours()<8);
+    T.push(["🌅","Lève-tôt", early, early && plural(early[1],"passage")+" avant 8h"]);
+    const night = count(e=>new Date(e.at).getHours()>=22);
+    T.push(["🦉","Oiseau de nuit", night, night && plural(night[1],"passage")+" après 22h"]);
+    const longest = L.filter(e=>+e.dur>0).sort((a,b)=>b.dur-a.dur)[0];
+    T.push(["⏱️","Marathonien", longest && [longest.who], longest && `${longest.dur} min le ${fmtShort.format(new Date(longest.at))}`]);
+    const big = count(e=>e.kind==="grosse"||e.kind==="combo");
+    T.push(["💩","Roi de la grosse", big, big && plural(big[1],"grosse commission")]);
+    const perDay = {}; L.forEach(e=>{ const k=e.who+"|"+startOfDay(e.at); perDay[k]=(perDay[k]||0)+1; });
+    const rec = leader(perDay);
+    T.push(["🔥","Record du jour", rec && [rec[0].split("|")[0]], rec && `${plural(rec[1],"passage")} le ${fmtShort.format(new Date(+rec[0].split("|")[1]))}`]);
+    const avgs = {}; PEOPLE.forEach(p=>{ const n=L.filter(e=>e.who===p&&+e.note>0).map(e=>+e.note); if(n.length>=3) avgs[p]=avgOf(n); });
+    const est = leader(avgs);
+    T.push(["⭐","Esthète", est, est && `note moyenne ${fr(est[1].toFixed(1))} / 5`]);
+    const fans = {}; L.forEach(e=>{ const n=Object.values(e.reactions||{}).reduce((a,b)=>a+(+b||0),0); fans[e.who]=(fans[e.who]||0)+n; });
+    const star = leader(fans);
+    T.push(["🎤","Star du journal", star, star && plural(star[1],"réaction")+" reçue"+(star[1]>1?"s":"")]);
+    const talk = count(e=>e.com && e.com.trim());
+    T.push(["💬","Pipelette", talk, talk && plural(talk[1],"commentaire")]);
+    $("#trophies").innerHTML = T.map(([e,t,w,d])=>`<div class="trophy"><div class="e">${e}</div><div class="tt">${t}</div>
+      ${w?`<div class="w">${esc(w[0])}</div><div class="d">${esc(d)}</div>`:`<div class="d">Encore à décrocher</div>`}</div>`).join("");
+  }
+
+  function renderPerson(){
+    chips($("#personPick"), PEOPLE.map(p=>[p,p]), state.person, v=>{ state.person=v; renderPerson(); });
+    const box = $("#person"), L = list().filter(e=>e.who===state.person);
+    if (!L.length){ box.innerHTML = `<div class="empty">${esc(state.person)} n'a encore rien enregistré.</div>`; return; }
+    const first = Math.min(...L.map(e=>e.at));
+    const days = Math.max(1, Math.round((startOfDay(Date.now())-startOfDay(first))/864e5)+1);
+    const notes = L.map(e=>+e.note).filter(n=>n>0), durs = L.map(e=>+e.dur).filter(n=>n>0);
+    const k = {petite:0,grosse:0,combo:0}; L.forEach(e=>{ if(k[e.kind]!=null) k[e.kind]++; });
+    const hrs = new Array(24).fill(0); L.forEach(e=>hrs[new Date(e.at).getHours()]++);
+    const fav = hrs.indexOf(Math.max(...hrs));
+    const pl = {}; L.forEach(e=>{ if(e.place) pl[e.place]=(pl[e.place]||0)+1; });
+    const favPlace = leader(pl);
+    const best = L.filter(e=>+e.note>0).sort((a,b)=>b.note-a.note||b.at-a.at)[0];
+    const pct = n => L.length ? n/L.length*100 : 0;
+    const a = avgOf(notes), ad = avgOf(durs);
+    box.innerHTML = `
+      <div class="kpis">
+        <div class="kpi"><b>${L.length}</b><span>au total</span></div>
+        <div class="kpi"><b>${L.filter(e=>inPeriod(e.at,"week")).length}</b><span>sur 7 jours</span></div>
+        <div class="kpi"><b>${fr((L.length/days).toFixed(1))}</b><span>par jour</span></div>
+      </div>
+      <div class="split">
+        <i style="width:${pct(k.petite)}%;background:var(--muted)"></i>
+        <i style="width:${pct(k.grosse)}%;background:var(--red)"></i>
+        <i style="width:${pct(k.combo)}%;background:var(--red-deep)"></i>
+      </div>
+      <div class="legend"><span>💧 Petite ${k.petite}</span><span>💩 Grosse ${k.grosse}</span><span>🎯 Combo ${k.combo}</span></div>
+      <ul class="facts">
+        <li><span>Note moyenne</span><b>${a?fr(a.toFixed(1))+" / 5":"–"}</b></li>
+        <li><span>Durée moyenne</span><b>${ad?Math.round(ad)+" min":"–"}</b></li>
+        <li><span>Heure favorite</span><b>${fav}h – ${fav+1}h</b></li>
+        <li><span>Lieu favori</span><b>${favPlace?esc(favPlace[0]):"–"}</b></li>
+        <li><span>Meilleure séance</span><b>${best?"🧻".repeat(best.note)+" le "+fmtShort.format(new Date(best.at)):"–"}</b></li>
+      </ul>`;
   }
 
   /* ---------- Formulaire ---------- */
@@ -367,34 +568,72 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     }
     $("#noteTxt").textContent = state.note+" / 5 : "+NOTES[state.note];
   }
-  $("#kind").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
-    state.kind=b.dataset.v;
-    $("#kind").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
-  });
+  function setKind(v){
+    state.kind = v;
+    $("#kind").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", String(x.dataset.v===v)));
+  }
+  $("#kind").querySelectorAll(".chip").forEach(b=>b.onclick=()=>setKind(b.dataset.v));
+  $("#who").insertAdjacentHTML("beforeend", PEOPLE.map(p=>`<option>${esc(p)}</option>`).join(""));
+
+  function resetForm(){
+    state.editId = null; state.note = 3; setKind("petite"); renderRolls();
+    $("#com").value=""; $("#dur").value=""; $("#when").value=nowLocal();
+    $("#editBanner").classList.remove("on"); $("#expressWrap").style.display="";
+    $("#save").textContent = "Tirer la chasse";
+  }
+  function showTab(name){
+    document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", String(x.dataset.tab===name)));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on", p.id==="p-"+name));
+  }
+  function startEdit(id){
+    const e = entries.find(x=>x.id===id); if (!e) return;
+    state.editId = id;
+    if (!PEOPLE.includes(e.who)) $("#who").insertAdjacentHTML("beforeend", `<option>${esc(e.who)}</option>`);
+    $("#who").value = e.who; $("#when").value = toInput(e.at);
+    setKind(e.kind || "petite"); state.note = +e.note || 3; renderRolls();
+    $("#dur").value = e.dur ?? ""; $("#place").value = e.place || ""; $("#com").value = e.com || "";
+    $("#editBanner").classList.add("on"); $("#expressWrap").style.display="none";
+    $("#save").textContent = "Enregistrer les modifications";
+    showTab("add"); window.scrollTo({top:0, behavior:"smooth"});
+  }
+  $("#cancelEdit").onclick = ()=>{ resetForm(); showTab("log"); };
 
   $("#save").onclick = async ()=>{
-    const who = $("#who").value.trim();
-    if (!who){ toast("Choisissez qui y est allé"); $("#who").focus(); return; }
+    const who = $("#who").value;
+    if (!who){ toast("Choisis qui y est allé"); $("#who").focus(); return; }
     const when = $("#when").value ? new Date($("#when").value).getTime() : Date.now();
     const dur = parseInt($("#dur").value,10);
     const e = { who, at: isNaN(when)?Date.now():when, kind: state.kind, note: state.note,
-      dur: isNaN(dur)?null:Math.max(0,Math.min(180,dur)),
-      place: $("#place").value.trim(), com: $("#com").value.trim(), createdAt: Date.now() };
+      dur: isNaN(dur)?null:Math.max(0,Math.min(180,dur)), place: $("#place").value.trim(), com: $("#com").value.trim() };
     $("#save").disabled = true;
-    const ok = await addEntry(e);
-    $("#save").disabled = false;
-    if (ok){
-      toast("Passage noté pour "+who+" 🧻");
-      $("#com").value=""; $("#dur").value=""; $("#when").value=nowLocal();
-      state.note=3; renderRolls();
+    if (state.editId){
+      const ok = await updateEntry(state.editId, e);
+      $("#save").disabled = false;
+      if (ok){ toast("Passage modifié"); resetForm(); showTab("log"); }
+      return;
     }
+    const id = await addEntry(e);
+    $("#save").disabled = false;
+    if (id){ toast("Passage noté pour "+who+" 🧻"); resetForm(); }
   };
+
+  /* ---------- +1 express ---------- */
+  PEOPLE.forEach(p=>{
+    const b=document.createElement("button"); b.type="button";
+    b.innerHTML = `<b>+1</b>${esc(p)}`;
+    b.onclick = async ()=>{
+      b.disabled = true;
+      const id = await addEntry({ who:p, at:Date.now(), kind:"petite", note:null, dur:null, place:"", com:"" });
+      b.disabled = false;
+      if (id) toast("+1 pour "+p+" 🧻", ()=>removeEntry(id));
+    };
+    $("#express").appendChild(b);
+  });
 
   /* ---------- Onglets & période ---------- */
   document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
-    document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected", String(x===b)));
-    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on", p.id==="p-"+b.dataset.tab));
-    if (b.dataset.tab==="add") $("#when").value = nowLocal();
+    showTab(b.dataset.tab);
+    if (b.dataset.tab==="add" && !state.editId) $("#when").value = nowLocal();
   });
   $("#period").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
     state.period=b.dataset.v;
