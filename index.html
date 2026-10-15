@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pompom · Le Trône</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#D7263D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pompom">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -173,6 +181,41 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 .toast button{margin-left:12px;border:0;background:var(--red);color:var(--on-red);font:inherit;font-weight:700;
   padding:4px 12px;border-radius:999px;cursor:pointer}
 .tabs button{font-size:.95rem}
+/* Alerte live */
+.live{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translate(-50%,-160%);z-index:25;
+  background:var(--red);color:var(--on-red);padding:12px 18px 12px 14px;border-radius:18px;font-weight:700;
+  display:flex;align-items:center;gap:10px;box-shadow:0 14px 30px -14px rgba(0,0,0,.5);transition:transform .35s cubic-bezier(.2,1.4,.4,1);
+  max-width:calc(100% - 24px)}
+.live.show{transform:translate(-50%,0)}
+.live .ic{font-size:1.6rem;line-height:1}
+.live small{display:block;font-weight:400;opacity:.85}
+/* Courbe */
+.curve{width:100%;height:auto;display:block}
+.curve .grid{stroke:var(--line);stroke-width:1}
+.curve .ax{fill:var(--muted);font-size:11px;font-family:inherit}
+.curve .ln{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.curve .area{opacity:.12}
+/* Heatmap */
+.heat-wrap{overflow-x:auto;padding-bottom:4px}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,15px);grid-auto-columns:15px;gap:3px}
+.heat i{border-radius:4px;background:var(--line)}
+.heat i.l1{background:color-mix(in srgb,var(--red) 30%,var(--line))}
+.heat i.l2{background:color-mix(in srgb,var(--red) 55%,var(--line))}
+.heat i.l3{background:color-mix(in srgb,var(--red) 80%,var(--line))}
+.heat i.l4{background:var(--red)}
+.heat i.out{background:transparent}
+.heat i.today{outline:2px solid var(--ink);outline-offset:-1px}
+.heat-row{display:flex;gap:6px}
+.heat-days{display:grid;grid-template-rows:repeat(7,15px);gap:3px;font-size:.7rem;color:var(--muted)}
+.heat-days span{line-height:15px}
+.heat-months{display:flex;font-size:.72rem;color:var(--muted);margin:0 0 4px 22px;height:14px;position:relative}
+.heat-months span{position:absolute}
+.heat-legend{display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted);margin-top:10px}
+.heat-legend i{width:13px;height:13px;border-radius:3px;display:inline-block}
+.install{display:none}
+.install.on{display:block}
+.install ol{margin:8px 0 0;padding-left:20px}
+.install li{margin:4px 0}
 /* Connexion */
 .login{position:fixed;inset:0;z-index:30;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column}
 .login[hidden]{display:none}
@@ -202,7 +245,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 @keyframes sp{to{transform:rotate(360deg)}}
 .me-line{display:flex;align-items:center;gap:10px;font-weight:600}
 .me-line .av{width:38px;height:38px;border-radius:50%;background:var(--red);color:var(--on-red);display:grid;place-items:center;font-weight:800}
-@media (prefers-reduced-motion: reduce){.lg-roll,.lg-card.shake,.flush .spin{animation:none}}
+@media (prefers-reduced-motion: reduce){.live{transition:none}.lg-roll,.lg-card.shake,.flush .spin{animation:none}}
 .userbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 0;color:var(--muted)}
 .userbar b{color:var(--ink)}
 .express.solo{grid-template-columns:1fr}
@@ -318,6 +361,21 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   <!-- STATS -->
   <section class="panel" id="p-stats">
     <div class="block">
+      <h3>30 derniers jours</h3>
+      <p class="lead" id="curveTxt">Passages par jour et par personne.</p>
+      <div id="curve"></div>
+      <div class="legend" id="curveLegend" style="margin-top:8px"></div>
+    </div>
+    <div class="block">
+      <h3>Calendrier</h3>
+      <p class="lead">Les 4 derniers mois, plus c'est rouge, plus ça a tiré la chasse.</p>
+      <div class="filters" id="heatPick"></div>
+      <div class="heat-wrap"><div class="heat-months" id="heatMonths"></div>
+        <div class="heat-row"><div class="heat-days"><span>L</span><span></span><span>M</span><span></span><span>V</span><span></span><span>D</span></div>
+        <div class="heat" id="heat"></div></div></div>
+      <div class="heat-legend">Moins <i style="background:var(--line)"></i><i style="background:color-mix(in srgb,var(--red) 30%,var(--line))"></i><i style="background:color-mix(in srgb,var(--red) 55%,var(--line))"></i><i style="background:color-mix(in srgb,var(--red) 80%,var(--line))"></i><i class="l4" style="background:var(--red)"></i> Plus</div>
+    </div>
+    <div class="block">
       <h3>Heures de pointe</h3>
       <p class="lead" id="peakTxt">Tous les passages de la bande, par heure de la journée.</p>
       <div class="hours" id="hours"></div>
@@ -335,8 +393,15 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     </div>
   </section>
 
+  <div class="block install" id="install" style="margin-top:18px">
+    <h3>Mets Pompom sur ton écran d'accueil</h3>
+    <p class="lead" id="installTxt" style="margin:0"></p>
+    <button class="flush" id="installBtn" hidden>Installer l'appli</button>
+    <button class="ghost" id="installHide" type="button" style="margin-top:12px">Plus tard</button>
+  </div>
   <p class="status" id="status">Connexion…</p>
 </div>
+<div class="live" id="live" role="status" aria-live="assertive"><span class="ic">🚽</span><span id="liveTxt"></span></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastTxt"></span><button id="toastBtn" hidden>Annuler</button></div>
 
 <script>
@@ -349,7 +414,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   const KIND = {petite:"💧 Petite", grosse:"💩 Grosse", combo:"🎯 Combo"};
   const EMOJIS = ["😂", "🤢", "👑", "💨"];
   let entries = [];
-  let state = {note:3, kind:"petite", period:"week", logWho:"all", person:PEOPLE[0], editId:null};
+  let state = {note:3, kind:"petite", period:"week", logWho:"all", person:PEOPLE[0], heatWho:"all", editId:null};
+  const COLORS = { "Pompom A":"var(--red)", "Pompom L":"var(--ink)", "Loulou":"var(--muted)" };
 
   /* ---------- Stockage partagé (Supabase) ---------- */
   const SUPABASE_URL = "https://ozonutovdkrtprpzdyad.supabase.co";
@@ -370,10 +436,27 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   }
   const payload = e => ({ p_moment:e.at, p_kind:e.kind, p_note:e.note, p_dur:e.dur, p_place:e.place, p_com:e.com });
 
+  let known = null, liveT;
+  function liveAlert(news){
+    const e = news[0];
+    const extra = { grosse:"💩 Une grosse !", combo:"🎯 Combo !", petite:"" }[e.kind] || "";
+    $("#liveTxt").innerHTML = `${esc(e.who)} vient d'y aller<small>${news.length>1 ? "+"+(news.length-1)+" autre"+(news.length>2?"s":"") : (extra || "À l'instant")}</small>`;
+    const el = $("#live"); el.classList.add("show");
+    clearTimeout(liveT); liveT = setTimeout(()=>el.classList.remove("show"), 4500);
+    try{ navigator.vibrate && navigator.vibrate([60,40,60]); }catch(err){}
+    if (document.hidden){ document.title = "🚽 " + e.who + " | Pompom"; }
+  }
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) document.title = "Pompom · Le Trône"; });
   async function refresh(){
     const { data, error } = await sb.from("passages").select("*").order("moment", { ascending:false }).limit(2000);
     if (error){ setStatus("Connexion à la base impossible : vérifie la table sur Supabase"); return; }
-    entries = data.map(fromRow);
+    const fresh = data.map(fromRow);
+    if (known){
+      const news = fresh.filter(e=>!known.has(e.id) && e.who!==me && Date.now()-e.at < 3*3600e3);
+      if (news.length) liveAlert(news);
+    }
+    known = new Set(fresh.map(e=>e.id));
+    entries = fresh;
     setStatus("Synchronisé avec toute la bande Pompom");
     renderAll();
   }
@@ -524,7 +607,58 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   }
 
   /* ---------- Stats ---------- */
-  function renderStats(){ renderHours(); renderTrophies(); renderPerson(); }
+  function renderStats(){ renderCurve(); renderHeat(); renderHours(); renderTrophies(); renderPerson(); }
+
+  function renderCurve(){
+    const L = list(), N = 30, today = startOfDay(Date.now());
+    const days = Array.from({length:N}, (_,i)=> today - (N-1-i)*864e5);
+    const series = PEOPLE.map(p=>{
+      const c = new Array(N).fill(0);
+      L.forEach(e=>{ if(e.who!==p) return; const i = Math.round((startOfDay(e.at)-days[0])/864e5); if(i>=0&&i<N) c[i]++; });
+      return {p, c};
+    });
+    const total = series.reduce((a,s)=>a+s.c.reduce((x,y)=>x+y,0),0);
+    const max = Math.max(2, ...series.flatMap(s=>s.c));
+    const W=520, H=190, l=26, r=8, t=10, b=24, iw=W-l-r, ih=H-t-b;
+    const X = i => l + i*iw/(N-1), Y = v => t + ih - v/max*ih;
+    let g = "";
+    const step = max<=4 ? 1 : Math.ceil(max/4);
+    for(let v=0; v<=max; v+=step) g += `<line class="grid" x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${l-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
+    [0,7,14,21,29].forEach(i=> g += `<text class="ax" x="${X(i)}" y="${H-6}" text-anchor="${i===0?"start":i===29?"end":"middle"}">${i===29?"Auj.":fmtShort.format(new Date(days[i]))}</text>`);
+    series.forEach(({p,c})=>{
+      const pts = c.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+      if (p===me) g += `<polygon class="area" style="fill:${COLORS[p]}" points="${X(0)},${Y(0)} ${pts} ${X(N-1)},${Y(0)}"/>`;
+      g += `<polyline class="ln" style="stroke:${COLORS[p]}" points="${pts}"/>`;
+      const last = c[N-1]; if (last) g += `<circle cx="${X(N-1)}" cy="${Y(last)}" r="4" style="fill:${COLORS[p]}"/>`;
+    });
+    $("#curve").innerHTML = `<svg class="curve" viewBox="0 0 ${W} ${H}" role="img" aria-label="Passages par jour sur 30 jours">${g}</svg>`;
+    $("#curveLegend").innerHTML = series.map(({p,c})=>`<span><i style="display:inline-block;width:12px;height:4px;border-radius:2px;background:${COLORS[p]};vertical-align:middle;margin-right:5px"></i>${esc(p)} ${c.reduce((a,b)=>a+b,0)}</span>`).join("");
+    $("#curveTxt").textContent = total ? `${plural(total,"passage")} pour la bande sur 30 jours, soit ${fr((total/N).toFixed(1))} par jour.` : "Aucun passage sur les 30 derniers jours.";
+  }
+
+  function renderHeat(){
+    chips($("#heatPick"), [["all","Toute la bande"], ...PEOPLE.map(p=>[p,p])], state.heatWho, v=>{ state.heatWho=v; renderHeat(); });
+    const today = startOfDay(Date.now()), WEEKS = 17;
+    const dow = (new Date(today).getDay()+6)%7; // lundi = 0
+    const start = today - (dow + (WEEKS-1)*7)*864e5;
+    const counts = {};
+    list().forEach(e=>{ if(state.heatWho!=="all" && e.who!==state.heatWho) return; const k=startOfDay(e.at); counts[k]=(counts[k]||0)+1; });
+    const vals = Object.values(counts), max = Math.max(1, ...vals);
+    const lvl = n => !n ? "" : n/max<=.25 ? "l1" : n/max<=.5 ? "l2" : n/max<=.75 ? "l3" : "l4";
+    let cells = "", months = "", lastM = -1;
+    const fmtM = new Intl.DateTimeFormat("fr-FR",{month:"short"});
+    for(let w=0; w<WEEKS; w++){
+      for(let d=0; d<7; d++){
+        const day = new Date(start); day.setDate(day.getDate() + w*7 + d); const ts = startOfDay(day);
+        if (d===0 && day.getMonth()!==lastM){ lastM = day.getMonth(); if (w < WEEKS-1) months += `<span style="left:${w*18}px">${fmtM.format(day)}</span>`; }
+        if (ts > today){ cells += `<i class="out"></i>`; continue; }
+        const n = counts[ts]||0;
+        cells += `<i class="${lvl(n)}${ts===today?" today":""}" title="${fmtShort.format(day)} : ${plural(n,"passage")}"></i>`;
+      }
+    }
+    $("#heat").innerHTML = cells; $("#heatMonths").innerHTML = months;
+    const wrap = $("#heat").closest(".heat-wrap"); wrap.scrollLeft = wrap.scrollWidth;
+  }
 
   function renderHours(){
     const L = list(), h = new Array(24).fill(0);
@@ -718,6 +852,30 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
     $("#lgEye").setAttribute("aria-label", show ? "Masquer le mot de passe" : "Afficher le mot de passe");
   };
   $("#logout").onclick = logout;
+
+  /* ---------- Écran d'accueil ---------- */
+  (function(){
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    let hidden = false; try{ hidden = localStorage.getItem("pompom-install-hide")==="1"; }catch(e){}
+    if (standalone || hidden) return;
+    const box = $("#install"), ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+    if (ios){
+      $("#installTxt").innerHTML = "Dans Safari : touche le bouton <b>Partager</b> (carré avec une flèche), puis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.";
+      box.classList.add("on");
+    } else if (/Android/.test(ua)){
+      $("#installTxt").innerHTML = "Dans Chrome : menu <b>⋮</b> en haut à droite, puis <b>Ajouter à l'écran d'accueil</b>.";
+      box.classList.add("on");
+    }
+    let deferred = null;
+    window.addEventListener("beforeinstallprompt", e=>{
+      e.preventDefault(); deferred = e;
+      $("#installTxt").textContent = "Une icône Pompom sur ton téléphone, qui s'ouvre en plein écran comme une vraie appli.";
+      $("#installBtn").hidden = false; box.classList.add("on");
+    });
+    $("#installBtn").onclick = async ()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; box.classList.remove("on"); };
+    $("#installHide").onclick = ()=>{ box.classList.remove("on"); try{ localStorage.setItem("pompom-install-hide","1"); }catch(e){} };
+  })();
 
   /* ---------- Onglets & période ---------- */
   document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
