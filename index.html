@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Pompom · Le Trône</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -74,7 +74,7 @@ label.t{display:block;font-weight:600;margin-bottom:8px}
 select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:40px!important;
   background-image:linear-gradient(45deg,transparent 50%,var(--red) 50%),linear-gradient(135deg,var(--red) 50%,transparent 50%)!important;
   background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%!important;background-size:6px 6px,6px 6px!important;background-repeat:no-repeat!important}
-input[type=text],input[type=datetime-local],input[type=number],textarea,select{
+input[type=text],input[type=password],input[type=datetime-local],input[type=number],textarea,select{
   width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);
   border-radius:12px;padding:11px 12px}
 textarea{resize:vertical;min-height:70px}
@@ -251,6 +251,54 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
 .express.solo{grid-template-columns:1fr}
 .express.solo button{padding:18px;font-size:1.05rem}
 @media (max-width:420px){.trophies{grid-template-columns:1fr}.kpi b{font-size:1.25rem}}
+
+/* Saisie : jamais sous 16px (sinon iOS zoome) */
+input,select,textarea{font-size:16px!important}
+input[type=password]{width:100%;font-family:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* Version plus compacte sur téléphone */
+@media (max-width:600px){
+  body{font-size:15px}
+  .wrap{padding:12px 12px 36px}
+  .hero{border-radius:22px;padding:16px 18px 14px}
+  .hero::after{width:130px;height:130px;border-width:20px;right:-34px;top:-34px}
+  .brand{font-size:.95rem}
+  .big{font-size:clamp(3rem,15vw,4.2rem);margin:8px 0 2px}
+  .big-label{font-size:.9rem}
+  .mini{gap:12px;margin-top:10px;font-size:.82rem}
+  .userbar{margin-top:10px;font-size:.88rem}
+  .userbar .ghost{padding:6px 12px;font-size:.85rem}
+  .tabs{margin:12px 0 10px;padding:4px}
+  .tabs button{padding:8px 4px;font-size:.85rem}
+  .card,.block{padding:14px;border-radius:16px}
+  .field{margin-bottom:14px}
+  label.t,.field .t{font-size:.92rem;margin-bottom:6px}
+  .chip{padding:6px 11px;font-size:.88rem}
+  .seg .chip{padding:8px 4px}
+  .rolls button{font-size:1.55rem;padding:2px}
+  .flush{font-size:1rem;padding:13px;border-radius:14px}
+  .express button{padding:12px}
+  .express button b{font-size:1.25rem}
+  .sect{font-size:.85rem;margin-bottom:6px}
+  .entry{grid-template-columns:44px 1fr auto;gap:10px;padding:10px 12px;border-radius:14px}
+  .entry .h{font-size:.95rem}
+  .entry .meta,.entry .com{font-size:.85rem}
+  .reacts button{font-size:.82rem;padding:2px 8px}
+  .rank{padding:11px;gap:10px;border-radius:14px}
+  .rank .pos{font-size:1.1rem}
+  .rank .tot{font-size:1.3rem}
+  .block h3{font-size:1.02rem}
+  .block .lead{font-size:.86rem;margin-bottom:10px}
+  .kpi{padding:10px}.kpi b{font-size:1.2rem}.kpi span{font-size:.78rem}
+  .trophy{padding:10px}.trophy .e{font-size:1.4rem}
+  .hours{height:100px}
+  .lg-top{padding:calc(32px + env(safe-area-inset-top,0px)) 20px 70px}
+  .lg-roll{font-size:2.6rem}
+  .lg-title{font-size:clamp(2.4rem,12vw,3.2rem)}
+  .lg-card{padding:18px;margin-top:-48px}
+  .lg-card h2{font-size:1.1rem;margin-bottom:14px}
+  .toast{font-size:.9rem}
+}
 </style>
 </head>
 <body>
