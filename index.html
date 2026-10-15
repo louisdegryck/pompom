@@ -6,6 +6,7 @@
 <title>Pompom · Le Trône</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --red:#D7263D; --red-deep:#A51C2E; --red-soft:#FBE3E6;
@@ -214,54 +215,59 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px soli
   const NOTES = ["", "À oublier", "Bof", "Correct", "Très bien", "Royal"];
   const KIND = {petite:"💧 Petite", grosse:"💩 Grosse", combo:"🎯 Combo"};
   let entries = [];        // {id, who, at, kind, note, dur, place, com}
-  let db = null, coll = null, mode = "local";
   let state = {note:3, kind:"petite", period:"week", who:""};
 
-  /* ---------- Stockage ---------- */
-  function localLoad(){
-    try{ return JSON.parse(localStorage.getItem("pompom-entries") || "[]"); }catch(e){ return []; }
+  /* ---------- Stockage partagé (Supabase) ---------- */
+  // 👉 Colle ici les infos de ton projet Supabase (Project Settings > API)
+  const SUPABASE_URL = "https://ozonutovdkrtprpzdyad.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_BNhJtE_YcSxfkloHaoS7Nw_Hc3OwSQv";
+
+  let sb = null, mode = "local";
+  const fromRow = r => ({ id:String(r.id), who:r.who, at:Number(r.moment), kind:r.kind, note:r.note, dur:r.dur, place:r.place, com:r.com });
+
+  function localLoad(){ try{ return JSON.parse(localStorage.getItem("pompom-entries") || "[]"); }catch(e){ return []; } }
+  function localSave(){ try{ localStorage.setItem("pompom-entries", JSON.stringify(entries)); }catch(e){} }
+
+  async function refresh(){
+    const { data, error } = await sb.from("passages").select("*").order("moment", { ascending:false }).limit(1000);
+    if (error){ setStatus("Connexion à la base impossible : vérifie l'URL, la clé et la table"); return; }
+    entries = data.map(fromRow);
+    setStatus("Synchronisé avec toute la bande Pompom");
+    renderAll();
   }
-  function localSave(){
-    try{ localStorage.setItem("pompom-entries", JSON.stringify(entries)); }catch(e){}
-  }
-  entries = localLoad();
 
   async function init(){
-    try{
-      if (window.claude && typeof window.claude.use === "function"){
-        db = await window.claude.use("db");
-      }
-    }catch(e){ db = null; }
-    if (db){
-      mode = "db";
-      coll = db.collection("passages");
-      coll.orderBy("at","desc").limit(1000).onSnapshot(snap=>{
-        entries = snap.docs.map(d => Object.assign({id:d.id}, d.data()));
-        setStatus("Synchronisé avec toute la bande Pompom");
-        renderAll();
-      }, err=>{
-        setStatus(err.code === "revoked" ? "Accès en lecture seule" : "Synchro interrompue, rechargez la page");
-      });
+    const configured = !SUPABASE_URL.startsWith("COLLE") && !SUPABASE_KEY.startsWith("COLLE");
+    if (window.supabase && configured){
+      mode = "sb";
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      await refresh();
+      sb.channel("passages-live")
+        .on("postgres_changes", { event:"*", schema:"public", table:"passages" }, () => refresh())
+        .subscribe();
+      setInterval(refresh, 30000); // filet de sécurité
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
     } else {
+      entries = localLoad();
       setStatus("Mode local : les passages restent sur cet appareil");
       renderAll();
     }
   }
 
   async function addEntry(e){
-    if (mode === "db"){
-      try{ await coll.add(e); return true; }
-      catch(err){
-        toast(err.code === "quota_exceeded" ? "Base pleine : supprimez d'anciens passages"
-          : err.code === "invalid_argument" ? "Vous n'avez pas le droit d'ajouter ici" : "Échec de l'envoi, réessayez");
-        return false;
-      }
+    if (mode === "sb"){
+      const { error } = await sb.from("passages").insert({
+        who:e.who, moment:e.at, kind:e.kind, note:e.note, dur:e.dur, place:e.place, com:e.com
+      });
+      if (error){ toast("Échec de l'envoi, réessaie"); return false; }
+      await refresh(); return true;
     }
     e.id = "l" + Date.now(); entries.unshift(e); localSave(); renderAll(); return true;
   }
   async function removeEntry(id){
-    if (mode === "db"){
-      try{ await coll.doc(id).delete(); }catch(err){ toast("Suppression impossible"); }
+    if (mode === "sb"){
+      const { error } = await sb.from("passages").delete().eq("id", id);
+      if (error) toast("Suppression impossible"); else refresh();
     } else { entries = entries.filter(x=>x.id!==id); localSave(); renderAll(); }
   }
 
